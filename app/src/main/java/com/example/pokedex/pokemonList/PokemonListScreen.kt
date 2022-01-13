@@ -41,7 +41,10 @@ import kotlin.random.Random
 
 
 @Composable
-fun PokemonListScreen(navController: NavController) {
+fun PokemonListScreen(
+    navController: NavController,
+    viewModel: PokemonListViewModel = hiltViewModel()
+) {
     // the surface lets us define how the background looks
     Surface(
         color = MaterialTheme.colors.background,
@@ -64,6 +67,8 @@ fun PokemonListScreen(navController: NavController) {
                     .padding(16.dp)
             ) {
                 // make call to viewModel and debounce the call
+                // resets the list when empty
+                viewModel.searchPokemonList(it)
             }
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -82,6 +87,9 @@ fun PokemonList(
     val endReached by remember { viewModel.endReached }
     val loadError by remember { viewModel.loadError }
     val isLoading by remember { viewModel.isLoading }
+    val isSearching by remember {
+        viewModel.isSearching
+    }
 
     // like our recyclerView
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
@@ -96,8 +104,8 @@ fun PokemonList(
         items(itemCount) {
             // this happens per every item like the inflater and binging
 
-            // bottom of results but API stills has data
-            if (it >= itemCount - 1 && !endReached) {
+            // bottom of results but API stills has data and we are not searching
+            if (it >= itemCount - 1 && !endReached && !isLoading && !isSearching) {
                 viewModel.loadPokemonPaginated()
             }
 
@@ -155,7 +163,7 @@ fun SearchBar(
                 .background(Color.White, CircleShape)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
                 .onFocusChanged {
-                    isHintDisplayed = it.isFocused
+                    isHintDisplayed = !it.isFocused
                 }
         )
         // shows the hint
